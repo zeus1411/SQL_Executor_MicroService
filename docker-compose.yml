@@ -1,0 +1,30 @@
+services:
+  sql-executor:
+    image: sql-executor-service:${SQL_EXECUTOR_IMAGE_TAG:-latest}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ${SQL_EXECUTOR_ENV_FILE:-.env}
+    ports:
+      - "127.0.0.1:${SQL_EXECUTOR_HOST_PORT:-3200}:3200"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3200/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
